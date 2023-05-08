@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+<div class="page-content">
+    <div class="bk-panel bk-panel-title-btns">
+        <div class="bk-panel-header p25" role="tab">
+            <div class="panel-title">欢迎使用</div>
+        </div>
+    <form enctype="multipart/form-data"  id="importForm" method="post"></form>
+        <div class="form-group">
+            <input type="file" id="exampleInputFile" name="file">
+            <p class="help-block"></p> 
+        </div>
+        <div class="text-right"><button id="btnSubmit" type="submit" class="btn btn-default btn-lg btn-block">提交</button>
+        </div>
+    </form>    
+    </div>
+</div> 
+{% endblock %}
+{% block script %}
+<script>
+    $(document).ready(
+        function(){
+            $("#btnSubmit").click(function(){
+            var files = $('#exampleInputFile')[0].files;
+            
+            if(files.length <= 0) {
+                return alert('请选择要上传的文件')
+            }
+            let fd = new FormData();
+            // let fd = new FormData(document.getElementById("importForm"));
+            // let data = new FormData(document.getElementById("importForm"));
+            let filename = $('input[type=file]').val().split('\\').pop();
+            // alert(filename)
+            fd.append('name', filename);
+            fd.append('file', files[0]);
+            $.ajax({
+                url:"/watch/upload-file",
+                type: "POST",
+                data: fd,
+                dataType: "json",
+                success:function(data){
+                    alert("上传成功");
+                },
+                error: function () {
+                    alert("上传失败");
+                },
+                processData: false,
+                contentType: false
+            })
+        })
+    }
+)
+</script>
+{% endblock %}

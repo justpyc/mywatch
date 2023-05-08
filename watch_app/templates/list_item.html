@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block page_content %}
+<div class="page-content">
+    <div class="bk-panel bk-panel-title-btns">
+        <div class="bk-panel-header p25" role="tab">
+            <div class="panel-title">文件列表</div>
+        </div>
+        <table class="bk-table has-table-bordered has-table-hover">
+            <thead>
+                <tr>
+                    <th style="width:80px;">序号</th>
+                    <th style="width:20%;">文件</th>
+                    <th>上传人</th>
+                    <th>联系方式</th>
+                    <th>上传时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in record %}
+                <tr>
+                    <td>{{ i.id }}</td>
+                    <td>{{ i.location }}</td>
+                    <td id="{{ i.uid }}">{{ i.username }}</td>
+                    <td>{{ i.mobile }}</td>
+                    <td>{{ i.ctime }}</td>
+                    <td><button id="{{ i.id }}" type="button" class="btn btn-info">识别</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+$(document).ready(function(){
+    $("button").click(function(){
+        var row = $(this).closest("tr")
+        // upload_id = data
+        var upload_id = row.find(">td").eq(0).text();
+        var location = row.find(">td").eq(1).text();
+        var  uid = row.find(">td").eq(2).attr("id");
+        // console.log(upload_id)
+        // console.log(location)
+        // console.log(uid)
+        $.ajax({
+            
+            url: "/watch/api/v1/handler-video",
+            type: "POST",
+            data: {
+                "upload_id": upload_id,
+                "location": location,
+                "uid": uid
+            },
+            dataType: "json",
+            // success
+            success: function (data) {
+                var code = data.code
+                var msg = data.message
+                if (code==200){
+                var msg = "识别任务下发成功，任务ID:" + data.data.task_id
+                // console.log(data.data.task_id)
+                console.log(msg)
+                alert(msg)
+            }else{
+                console.log(msg)
+                alert(msg)
+            }
+            },
+            // error
+            error: function (xhr, errmsg, err) {
+               alert("接口调用失败")
+            }
+
+        });
+    });
+})
+
+</script>
+{% endblock %}
