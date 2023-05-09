@@ -16,3 +16,4 @@ app.conf.humanize(with_defaults=False, censored=True)
 # Load task modules from all registered Django apps.
 # app.conf.update(configs)
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+#  ../bin/celery -A mywatch  worker -l info

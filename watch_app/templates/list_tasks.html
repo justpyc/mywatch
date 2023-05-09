@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block head%}
+<!-- 如果没有引用以下文件，请去掉此注释 -->
+<!-- <link href="https://magicbox.bk.tencent.com/static_api/v3/bk/css/bk.css" rel="stylesheet">
+<link href="https://magicbox.bk.tencent.com/static_api/v3/assets/artDialog-6.0.4/css/ui-dialog.css" rel="stylesheet">
+<script src="https://magicbox.bk.tencent.com/static_api/v3/assets/js/jquery-1.10.2.min.js"></script>
+<script src="https://magicbox.bk.tencent.com/static_api/v3/assets/artDialog-6.0.4/dist/dialog-min.js"></script> -->
+<style type="text/css">
+    .modal-dialog{position: absolute; top: 0; bottom: 0; left: 0; right: 0; width:800px}
+    .modal-content{overflow-y: scroll; position: absolute; top: 0; bottom: 0; width:100%;}
+    .modal-body{overflow-y: scroll; position: absolute; top: 55px; bottom: 65px; width:100%;}
+    .modal-header .close{margin-right: 15px;}
+    .modal-footer{position: absolute; width:100%; bottom: 0;}
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="page-content">
+    <div class="bk-panel bk-panel-title-btns">
+        <div class="bk-panel-header p25" role="tab">
+            <div class="panel-title">报警信息</div>
+        </div>
+        <table class="bk-table has-table-bordered has-table-hover">
+            <thead>
+                <tr>
+                    <th style="width:450px;">任务ID</th>
+                    <th style="width:20%;">发起人</th>
+                    <th>文件名</th>
+                    <th>状态</th>
+                    <th>结果详情</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in record %}
+                <tr>
+                    <td>{{ i.id }}</td>
+                    <td id="{{ i.uid }}">{{ i.username }}</td>
+                    <td>{{ i.filename }}</td>
+                    <td>{{ i.status }}</td>
+                    <!-- <td><button class="king-btn king-info mb15" data-code="2">详情</button></td> -->
+                    <td><button class="btn btn-default btn-sm" data-toggle="modal" data-target="#myModal">详情</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+					&times;
+				</button>
+				<h4 class="modal-title" id="myModalLabel">
+                    任务详情
+                </h4>
+			</div>
+			<div class="modal-body" id="myModalBody">
+				<!-- 模态框body -->
+			</div>
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">关闭
+				</button>
+				<!-- <button type="button" class="btn btn-primary">
+					提交更改
+				</button> -->
+			</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal -->
+</div>
+{% endblock %}
+
+{% block script %}
+
+<script type="text/javascript">
+    //模态对话框
+    // var task_id = {{ record }};
+    function create_row(task_id, ps){
+        var result = "";
+        for (var i=0;i<ps.length;i++){
+            if (i%3 == 0){
+                result += "<tr><td>" + "<a href=\"/watch/image?" + "id=" + task_id + "&" +  "filename=" +  ps[i] + "\"" +  "target=\"_blank\" rel=\"noopener noreferrer\">"+ ps[i] + "</a>" + "</td>";
+                result += "<td>" + "<a href=\"/watch/image?" + "id=" + task_id + "&" +  "filename=" +  ps[i+1] + "\"" +  "target=\"_blank\" rel=\"noopener noreferrer\">" + ps[i+1] + "</a>" + "</td>";
+                result += "<td>" + "<a href=  target=\"_blank\" rel=\"noopener noreferrer\">"+ ps[i+2] + "</a>" + "</td></tr>";
+            }
+        }
+        return result
+    }
+    function create_table(row){
+        var mybody = row;
+        var content = `
+        <table class="bk-table has-table-bordered has-table-hover">
+        <thead>
+            <tr>
+                <th style="width:450px;">文件列表1</th>
+                <th style="width:450px;">文件列表2</th>
+                <th style="width:450px;">文件列表3</th>
+            </tr>
+        </thead>
+        <tbody>${mybody}</tbody>
+        </div>`;
+        var content1 = `
+        <table class="table table-hover">
+	    <thead>
+		    <tr>
+			    <th style="width:450px;">文件列表1</th>
+                <th style="width:450px;">文件列表2</th>
+                <th style="width:450px;">文件列表3</th>
+		    </tr>
+	    </thead>
+	    <tbody>${mybody}</tbody>
+        </table>
+        `
+        return content1
+    }
+    $("td button").click(function() {
+        var row = $(this).closest("tr")
+        var task_id = row.find(">td").eq(0).text();
+        var username = row.find(">td").eq(1).text();
+        var filename = row.find(">td").eq(2).attr("id");
+        console.log({"id":task_id})
+        $.ajax({
+            
+            url: "/watch/api/v1/get-task-info",
+            type: "POST",
+            data: {"id":task_id},
+            dataType: "json",
+            // success
+            success: function (data) {
+                var code = data.code
+                var msg = data.message
+                var pictures = data.data.pictures
+                if (code==200){
+                    row = create_row(task_id, pictures);
+                    console.log(row)
+                    tables = create_table(row)
+                    console.log(tables);
+                    $("#myModalBody").append(tables)
+                }else{
+                    console.log(msg)
+                    alert(msg)
+                }
+            },
+            // error
+            error: function (xhr, errmsg, err) {
+               alert("接口调用失败")
+            }
+
+        });
+    });
+</script>
+{% endblock %}

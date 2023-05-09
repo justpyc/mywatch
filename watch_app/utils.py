@@ -3,6 +3,7 @@
 
 from base64 import b64encode,b64decode
 
+
 def get_object_or_none(model, **kwargs):
     try:
         obj = model.objects.get(**kwargs)

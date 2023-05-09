@@ -1,15 +1,19 @@
 import os
 import uuid
+from concurrent.futures import ProcessPoolExecutor
 from django.shortcuts import render, redirect
 # from django.contrib.sessions.models import Session
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
-from watch_app.models import User, UploadRecord
-from watch_app.tasks import add, async_handler_video_recognition
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect, FileResponse
+from watch_app.models import User, UploadRecord, AnalysisRecord
+# from watch_app.tasks import add, async_handler_video_recognition
+from watch_app.parse_video import video_handler
 from watch_app.utils import get_object_or_none, my_base64_encode
-from mywatch.settings import FILE_STORAGE_PATH
+from mywatch.settings import FILE_STORAGE_PATH, HAARCASCADES_EXPORT_PATH, HAARCASCADES_XML_DATA_FILE
 from pprint import pprint
 
 # from django.contrib.auth.models import User
+
+executor = ProcessPoolExecutor(30)
 
 def login(request):
     session_key = request.session.session_key
@@ -74,14 +78,53 @@ def verfiy(request):
 
 
 def get_images(request):
-    pass
+    task_id = request.GET.get("id")
+    filename = request.GET.get("filename")
+    img_path = os.path.join(str(HAARCASCADES_EXPORT_PATH), "{i}/{n}".format(i=task_id, n=filename))
+    print(img_path)
+    f = open(img_path, "rb")
+    response = FileResponse(f)
+    
+    # response = HttpResponse(stream)
+    # response["content_type"] = "image/jpeg" 
+    # response['Content-Type'] = 'application/octet-stream'
+    # filename = 'attachment; filename=' + '{}.jpg'.format(filename)
+    # TODO 设置文件名的包含中文编码方式
+    # response['Content-Disposition'] = filename.encode('utf-8', 'ISO-8859-1')
+    # response['Content-Disposition'] = 'attachment;filename='+ '{}.jpg'.format(filename)
+    return response
+    
+def list_task_record(request):
+    user_id = request.session["id"]
+    record = AnalysisRecord.objects.filter(**{"uid":user_id})
+    for i in record:
+        user_obj = get_object_or_none(User, **{"id": user_id})
+        upload_obj = get_object_or_none(UploadRecord, **{"id": i.upload_id})
+        setattr(i, "username", user_obj.username)
+        setattr(i, "filename", os.path.basename(upload_obj.location))
+        i.status = i.get_status_display()
+    context = {"record": record}
+    return render(request, "list_tasks.html", context)
+
+def get_task_info(request):
+    params = request.POST.dict()
+    task_id = params.get("id")
+    record = get_object_or_none(AnalysisRecord, **{"id": task_id})
+    pictures = [os.path.basename(i) for i in record.pictures.split(",")]
+    data = {
+        "id": record.id,
+        "pictures": pictures
+    }
+    return set_status_2xx(data)
 
 def index(request):
     return render(request, "index.html")
 
 
 def list_item(request):
-    record = UploadRecord.objects.all()
+    user_id = request.session["id"]
+    # username = request.session["username"]
+    record = UploadRecord.objects.filter(**{"uid":user_id})
     for i in record:
         i.location = os.path.basename(i.location)
         uid = i.uid
@@ -105,17 +148,28 @@ def do_handler_vedio(request):
     # user_obj = get_object_or_none(User, **{"id": upload_obj.uid})
     task_id = str(uuid.uuid4())
     # user_id, video_upload_id, video_path, max_count
-    params = {
-        "user_id": uid, 
-        "video_upload_id": upload_obj.id,
-        "video_path": upload_obj.location,
-        "max_count":20
+    data = {
+        "id": task_id, 
+        "upload_id": upload_obj.id,
+        "uid": uid
     }
-    async_handler_video_recognition.apply_async(kwargs=params, task_id=task_id)
-    return set_status_2xx(data={"task_id":"aa"})
+    # print(params)
+    AnalysisRecord.objects.create(**data)
+    export_path = os.path.join(HAARCASCADES_EXPORT_PATH, task_id)
+    os.makedirs(export_path, exist_ok=True)
 
-def alert_histroy(request):
-    return render(request, "alert_history.html")
+    for i in HAARCASCADES_XML_DATA_FILE:
+        executor.submit(
+            video_handler, **{
+                "task_id": task_id,
+                "video_path":upload_obj.location,
+                "cascades_data_xml": i,
+                "export_path": export_path,
+                "max_count":20
+            }
+        )
+    # async_handler_video_recognition.apply_async(kwargs=params, task_id=task_id)
+    return set_status_2xx(data={"task_id":task_id})
 
 def upload_file(request):
     # if request.method == "POST":

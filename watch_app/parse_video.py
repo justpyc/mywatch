@@ -1,8 +1,27 @@
 import os
+import traceback
 import time
 
 import cv2 as cv
 
+
+import sys
+import  django
+
+print(os.getcwd())
+if os.path.exists('../watch_app'):
+    sys.path.insert(0, '../watch_app')
+if os.path.exists('../'):
+    sys.path.insert(0, '../')
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mywatch.settings")
+django.setup()
+
+from django.db.utils import DatabaseError, OperationalError
+from django.db import close_old_connections
+
+from watch_app.models import AnalysisRecord
+from watch_app.utils import get_object_or_none
 
 def handler_time(millseconds):
     hour = 0
@@ -104,6 +123,31 @@ def do_video_recognition(
     cv.destoryAllWindows()
     return path_list
 
+
+def video_handler(
+        task_id, 
+        video_path, 
+        cascades_data_xml=None, 
+        export_path=None, 
+        max_count=0):
+    status = 0
+    result = []
+    
+    try:
+        _result = do_video_recognition(video_path, cascades_data_xml, export_path, max_count)
+        status = 1
+        result.extend(_result)
+    except Exception as e:
+        error = "\n".join((traceback.format_exc(), str(e)))
+        print(error) 
+    obj = get_object_or_none(AnalysisRecord, **{"id":task_id})
+    old_list = obj.pictures.split(",")
+    result.extend(old_list)
+    obj.pictures = ",".join(result)
+    obj.status = status
+    obj.save()
+
+    
 if __name__ == "__main__":
     xml_data = "/opt/mywatch/opencv/data/haarcascades/haarcascade_frontalcatface.xml"
     export_path = "/opt/mywatch/exports"
