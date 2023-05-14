@@ -53,3 +53,16 @@ class UploadRecord(models.Model):
         db_table = 'upload_record'
 
 
+class UserFavour(models.Model):
+    """
+    用户收藏表
+    """
+    id = models.AutoField(primary_key=True,verbose_name="序列ID")
+    uid = models.IntegerField(verbose_name='用户ID')
+    task_id = models.UUIDField(verbose_name="任务ID")
+    picture = models.CharField(max_length=200, verbose_name='图片')
+    
+    class Meta:
+        db_table = 'user_favour'
+
+

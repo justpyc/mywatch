@@ -4,7 +4,7 @@ from concurrent.futures import ProcessPoolExecutor
 from django.shortcuts import render, redirect
 # from django.contrib.sessions.models import Session
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect, FileResponse
-from watch_app.models import User, UploadRecord, AnalysisRecord
+from watch_app.models import User, UploadRecord, AnalysisRecord, UserFavour
 # from watch_app.tasks import add, async_handler_video_recognition
 from watch_app.parse_video import video_handler
 from watch_app.utils import get_object_or_none, my_base64_encode
@@ -110,12 +110,37 @@ def get_task_info(request):
     params = request.POST.dict()
     task_id = params.get("id")
     record = get_object_or_none(AnalysisRecord, **{"id": task_id})
-    pictures = [os.path.basename(i) for i in record.pictures.split(",")]
+    # print(record.pictures)
+    pictures = [os.path.basename(i) for i in record.pictures.split(",") if bool(i)]
     data = {
         "id": record.id,
         "pictures": pictures
     }
     return set_status_2xx(data)
+
+def create_user_favour(request):
+    user_id = request.session["id"]
+    params = request.POST.dict()
+    task_id = params.get("task_id")
+    picture_name = params.get("picture_name")
+    data = {
+      "uid":user_id,
+      "task_id": task_id,
+      "picture":picture_name  
+    }
+    UserFavour.objects.create(**data)
+    print("{u} favour {i}, {p}".format(u=user_id, i=task_id, p=picture_name))
+    return set_status_2xx(data=data)
+
+
+def list_user_favour(request):
+    return render(request, "list_user_favour.html")
+
+def get_user_favour(request):
+    user_id = request.session["id"]
+    _list = UserFavour.objects.filter(**{"uid":user_id}).values()
+    return set_status_2xx(data=list(_list))
+
 
 def index(request):
     return render(request, "index.html")

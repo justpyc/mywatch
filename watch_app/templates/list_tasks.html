@@ -19,7 +19,7 @@
 <div class="page-content">
     <div class="bk-panel bk-panel-title-btns">
         <div class="bk-panel-header p25" role="tab">
-            <div class="panel-title">报警信息</div>
+            <div class="panel-title">识别信息</div>
         </div>
         <table class="bk-table has-table-bordered has-table-hover">
             <thead>
@@ -83,34 +83,44 @@
     function create_row(task_id, ps){
         var result = "";
         for (var i=0;i<ps.length;i++){
-            if (i%3 == 0){
-                result += "<tr><td>" + "<a href=\"/watch/image?" + "id=" + task_id + "&" +  "filename=" +  ps[i] + "\"" +  "target=\"_blank\" rel=\"noopener noreferrer\">"+ ps[i] + "</a>" + "</td>";
-                result += "<td>" + "<a href=\"/watch/image?" + "id=" + task_id + "&" +  "filename=" +  ps[i+1] + "\"" +  "target=\"_blank\" rel=\"noopener noreferrer\">" + ps[i+1] + "</a>" + "</td>";
-                result += "<td>" + "<a href=  target=\"_blank\" rel=\"noopener noreferrer\">"+ ps[i+2] + "</a>" + "</td></tr>";
+            var filename = ps[i];
+            var filename_next = ps[i+1];
+            var tid = task_id;
+            
+            var _td = `
+            <td>
+                <a href="/watch/image?id=${tid}&filename=${filename}" target="_blank" rel="noopener noreferrer">${filename}</a>
+            </td>
+            <td>
+                <button type="button" class="btn btn-info">收藏</button>
+            </td>
+            `
+            
+            var _td_next = `
+            <td>
+                <a href="/watch/image?id=${tid}&filename=${filename_next}" target="_blank" rel="noopener noreferrer">${filename_next}</a>
+            </td>
+            <td>
+                <button type="button" class="btn btn-info">收藏</button>
+            </td>
+            `
+            
+            if (i%2 == 0){
+                result += ("<tr>" + _td + _td_next + "</tr>");
             }
         }
         return result
     }
     function create_table(row){
         var mybody = row;
-        var content = `
-        <table class="bk-table has-table-bordered has-table-hover">
-        <thead>
-            <tr>
-                <th style="width:450px;">文件列表1</th>
-                <th style="width:450px;">文件列表2</th>
-                <th style="width:450px;">文件列表3</th>
-            </tr>
-        </thead>
-        <tbody>${mybody}</tbody>
-        </div>`;
         var content1 = `
-        <table class="table table-hover">
+        <table id="task_table" class="table table-hover">
 	    <thead>
 		    <tr>
-			    <th style="width:450px;">文件列表1</th>
-                <th style="width:450px;">文件列表2</th>
-                <th style="width:450px;">文件列表3</th>
+			    <th style="width:620px;">文件列表1</th>
+                <th style="width:30px;">收藏</th>
+                <th style="width:620px;">文件列表2</th>
+                <th style="width:30px;">收藏</th>
 		    </tr>
 	    </thead>
 	    <tbody>${mybody}</tbody>
@@ -123,9 +133,8 @@
         var task_id = row.find(">td").eq(0).text();
         var username = row.find(">td").eq(1).text();
         var filename = row.find(">td").eq(2).attr("id");
-        console.log({"id":task_id})
-        $.ajax({
-            
+        // console.log({"id":task_id})
+        $.ajax({            
             url: "/watch/api/v1/get-task-info",
             type: "POST",
             data: {"id":task_id},
@@ -137,10 +146,38 @@
                 var pictures = data.data.pictures
                 if (code==200){
                     row = create_row(task_id, pictures);
-                    console.log(row)
+                    // console.log(row)
                     tables = create_table(row)
-                    console.log(tables);
+                    // console.log(tables);
+                    var modal_title = "任务详情"+ "[" +task_id + "]"
+                    $("#myModalLabel").text(modal_title)
+                    $("#myModalBody").empty();
                     $("#myModalBody").append(tables)
+                    $("#task_table tbody td button").click(function(){
+                        index = $(this).parent().index();
+                        // var dataLeft = $(this).closest('tr').find('td:eq(' + ($(this).parent().index() - 1) + ')').text();
+                        // var dataRight = $(this).closest('tr').find('td:eq(' + ($(this).parent().index() + 1) + ')').text();
+                        // var data = $(this).closest('tr').find('td:first').text();
+                        // var picture_name = _row.find(">td").eq(0).text();
+                        var picture_name = $(this).closest('tr').find('td:eq(' + (index - 1) + ')').text().trim();
+                        console.log(picture_name);
+                        // console.log(picture_name)
+                        $.ajax({
+                            url: "/watch/api/v1/create-user-favour",
+                            type: "POST",
+                            data: {
+                                "task_id":task_id,
+                                "picture_name":picture_name
+                            },
+                            dataType: "json",
+                            success: function(data){
+                                $(this).text("已收藏");
+                            },
+                            error: function(data){
+                                $(this).text("收藏失败");
+                            }
+                        });
+                    });
                 }else{
                     console.log(msg)
                     alert(msg)
@@ -150,8 +187,8 @@
             error: function (xhr, errmsg, err) {
                alert("接口调用失败")
             }
-
         });
     });
+    
 </script>
 {% endblock %}

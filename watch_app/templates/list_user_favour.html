@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block page_content %}
+<div class="page-content">
+    <div class="bk-panel bk-panel-title-btns">
+        <div class="bk-panel-header p25" role="tab">
+            <div class="panel-title">图片收藏</div>
+        </div>
+        <table class="bk-table has-table-bordered has-table-hover overflow-y">
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    function create_td(t1, p1, id){
+        var id = id;
+        var t1 = t1;
+        var p1 = p1;
+
+        var body = `
+        <td>
+            <a id="${id}">
+            <img src="/watch/image?id=${t1}&filename=${p1}" alt="图片无法显示"  width="350" height="500">
+            </a>
+        </td>
+        `
+        return body
+    }
+
+    $(document).ready(function(){
+        $.ajax({
+            url: "/watch/api/v1/get-user-favour",
+            type: "GET",
+            // dataType: "json",
+            // success
+            success: function (data) {
+                var code = data.code
+                var msg = data.message
+                if (code==200){
+                    // console.log(data.data)
+                    // var task_id = data.data.task_id;
+                    // var picture = data.data.picture;
+                    var list = data.data;
+                    // console.log(list);
+                    length = list.length
+                    var body="<tr>"
+                    if (length <=3 ){
+                        for (var i=0 ;i <list.length ;i++){
+                            body += create_td(list[i].task_id, list[i].picture, list[i].id);
+                        }
+                        body += "</tr>"
+                    }else{
+                        for (var i=1 ;i <list.length ;i++){
+                            body += create_td(list[i].task_id, list[i].picture);
+                            if (i%3 == 0){
+                                // console.log(list[i].task_id);
+                                // console.log(list[i].picture);
+                                // body += create_td(list[i].task_id, list[i].picture);
+                                body += "</tr><tr>"
+                            }
+                        }
+                        body += "</tr>"
+                    }
+                    $("#tbody").empty();
+                    console.log(body)
+                    $("#tbody").append(body);
+                }else{
+                    console.log(msg);
+                }},
+                // error
+            error: function (xhr, errmsg, err) {
+               alert("接口调用失败")
+            }
+        });
+    })
+
+</script>
+{% endblock %}
