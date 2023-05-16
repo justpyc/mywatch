@@ -24,7 +24,10 @@
                     <td id="{{ i.uid }}">{{ i.username }}</td>
                     <td>{{ i.mobile }}</td>
                     <td>{{ i.ctime }}</td>
-                    <td><button id="{{ i.id }}" type="button" class="btn btn-info">识别</button></td>
+                    <td>
+                        <button id="{{ i.id }}" type="button" class="btn btn-info">播放</button>
+                        <button id="{{ i.id }}" type="button" class="btn btn-info">识别</button>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
