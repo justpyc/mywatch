@@ -110,7 +110,7 @@ def do_video_recognition(
                 image = cv.resize(raw_frame, (int(v_width), int(v_height)), interpolation=cv.INTER_LINEAR)
                 # image = cv.cvtColor(image, cv.COLOR_BGR2GRAY) #将图片置灰
                 # image = cv.resize(image, (47, 57), interpolation=cv.INTER_CUBIC) # 处理面部大小
-                image_name = "{h}-{m}-{s}-{ms}.jpg".format(h=hour, m=minute, s=second, ms=ms)
+                image_name = "{h}h{m}min{s}s.jpg".format(h=hour, m=minute, s=second, ms=ms)
                 image_path = os.path.join(export_path, image_name)
                 cv.imwrite(image_path, image)
                 count += 1
