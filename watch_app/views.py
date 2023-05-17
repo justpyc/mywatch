@@ -94,6 +94,23 @@ def get_images(request):
     # response['Content-Disposition'] = 'attachment;filename='+ '{}.jpg'.format(filename)
     return response
     
+def play_video(request):
+    # 获取视频文件的路径
+    filename = request.GET.get("filename")
+    video_path = os.path.join(str(FILE_STORAGE_PATH), filename)
+    # 读取视频文件
+    with open(video_path, 'rb') as f:
+        video_data = f.read()
+    # 设置响应头
+    try:
+        content_type = filename.split(".")[-1]
+    except Exception as e:
+        print(str(e))
+        content_type = "mp4"
+    response = HttpResponse(video_data, content_type='video/{t}'.format(t=content_type))
+    response['Content-Disposition'] = 'inline; filename={n}'.format(n=filename)
+    return response
+
 def list_task_record(request):
     user_id = request.session["id"]
     record = AnalysisRecord.objects.filter(**{"uid":user_id})

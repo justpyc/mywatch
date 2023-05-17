@@ -25,8 +25,8 @@
                     <td>{{ i.mobile }}</td>
                     <td>{{ i.ctime }}</td>
                     <td>
-                        <button id="{{ i.id }}" type="button" class="btn btn-info">播放</button>
-                        <button id="{{ i.id }}" type="button" class="btn btn-info">识别</button>
+                        <button type="button" class="btn btn-info play-video">播放</button>
+                        <button type="button" class="btn btn-info shibie">识别</button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -34,20 +34,50 @@
         </table>
     </div>
 </div>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+					&times;
+				</button>
+				<h4 class="modal-title" id="myModalLabel">
+                    视频播放
+                </h4>
+			</div>
+			<div class="modal-body" id="myModalBody">
+				<!-- 模态框body -->
+                <video id="my-video" width="860px" height="400px" controls>
+                    <source src="">
+                    <!-- <source src="video.webm" type="video/webm"> -->
+                    不支持的视频格式
+                  </video>
+			</div>
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">关闭
+				</button>
+			</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal -->
+</div>
 {% endblock %}
 
 {% block script %}
 <script>
 $(document).ready(function(){
-    $("button").click(function(){
+    $("table").on('click', '.shibie',function(){
         var row = $(this).closest("tr")
         // upload_id = data
         var upload_id = row.find(">td").eq(0).text();
         var location = row.find(">td").eq(1).text();
-        var  uid = row.find(">td").eq(2).attr("id");
-        // console.log(upload_id)
-        // console.log(location)
-        // console.log(uid)
+        var uid = row.find(">td").eq(2).attr("id");
+        console.log(upload_id);
+        console.log(location);
+        console.log(uid);
+        console.log($(this).text());
+
         $.ajax({
             
             url: "/watch/api/v1/handler-video",
@@ -76,9 +106,26 @@ $(document).ready(function(){
             error: function (xhr, errmsg, err) {
                alert("接口调用失败")
             }
-
         });
     });
+
+    $("table").on('click', '.play-video',function(){
+        // console.log($(this).text());
+        var row = $(this).closest("tr")
+        var location = row.find(">td").eq(1).text();
+        console.log(location);
+        // 获取video元素
+        var video = $('#my-video')[0];
+  
+        // 设置属性
+        $(video).attr({
+            'src': '/watch/video?filename=' + location,
+            // 'autoplay': true,
+            // 'controls': true,
+            // 'loop': true
+        });
+        $("#myModal").modal("show");
+    })
 })
 
 </script>

@@ -16,4 +16,5 @@ urlpatterns = [
     path('api/v1/create-user-favour', views.create_user_favour, name="create-user-favour"),
     path('api/v1/add', views.test_celery, name="test-celery"),
     path('image', views.get_images, name="get-images"),
+    path('video', views.play_video, name="play-video"),
 ]
