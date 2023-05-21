@@ -137,6 +137,7 @@ if not Path.exists(FILE_STORAGE_PATH):
 
 HAARCASCADES_XML_DATA_FILE = [
     # "/opt/mywatch/opencv/data/haarcascades/haarcascade_frontalcatface.xml",
+    str(Path.joinpath(BASE_DIR, 'xml_data/haarcascade_fullbody.xml')),
     str(Path.joinpath(BASE_DIR, 'xml_data/haarcascade_frontalcatface.xml')),
 ]
 HAARCASCADES_EXPORT_PATH = Path.joinpath(BASE_DIR, 'tasks')

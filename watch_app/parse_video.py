@@ -149,11 +149,11 @@ def video_handler(
 
     
 if __name__ == "__main__":
-    xml_data = "/opt/mywatch/opencv/data/haarcascades/haarcascade_frontalcatface.xml"
-    export_path = "/opt/mywatch/exports"
+    xml_data = "/Users/duanbin/work/mycat/mywatch/xml_data/haarcascade_fullbody.xml"
+    export_path = "/Users/duanbin/work/mycat/mywatch/tasks/afe9540d-c332-4162-af32-634875871ba9"
     # s = handler_time(8700)
     # print(s)
     res = do_video_recognition(
-        "/opt/mywatch/exports/test_face.mp4", 
+        "/Users/duanbin/work/mycat/mywatch/downloads/99_1684383355.mp4", 
         xml_data, export_path, 30)
     print(res)
